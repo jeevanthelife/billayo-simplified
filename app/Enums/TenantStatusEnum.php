@@ -4,7 +4,7 @@ namespace App\Enums;
 
 use Filament\Support\Contracts\HasLabel;
 
-enum UserStatusEnum: string implements HasLabel
+enum TenantStatusEnum: string implements HasLabel
 {
     case Active = 'Active';
     case Inactive = 'Inactive';
