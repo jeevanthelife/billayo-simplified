@@ -7,6 +7,7 @@ namespace App\Models;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Models\Contracts\HasName;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -74,6 +75,22 @@ class User extends Authenticatable implements HasName
 
     public function getFilamentName(): string
     {
-        return "{$this->first_name} {$this->last_name}";
+        return $this->getFullNameAttribute();
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return trim("{$this->first_name} {$this->middle_name} {$this->last_name}");
+    }
+
+    public function scopeOrderByFullName($query, string $direction = 'asc')
+    {
+        return $query->orderBy('first_name', $direction)
+            ->orderBy('last_name', $direction);
+    }
+
+    public function tenants(): BelongsToMany
+    {
+        return $this->belongsToMany(Tenant::class, 'tenant_users', 'user_id', 'tenant_id');
     }
 }

@@ -50,6 +50,9 @@ class RoomResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('id')
+                    ->label('ID')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('house.name')
                     ->numeric()
                     ->sortable(),
