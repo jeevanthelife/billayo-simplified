@@ -45,6 +45,10 @@ class TenantResource extends Resource
                 Forms\Components\DatePicker::make('start_date')
                     ->suffix('A.D')
                     ->required(),
+                Forms\Components\TextInput::make('electricity_rate')
+                    ->label(__("Electricity Rate"))
+                    ->required()
+                    ->numeric(),
                 Forms\Components\Select::make('status')
                     ->required()
                     ->options(TenantStatusEnum::class)
@@ -67,6 +71,9 @@ class TenantResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('start_date')
                     ->date()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('electricity_rate')
+                    ->numeric()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('status')
                     ->searchable(),

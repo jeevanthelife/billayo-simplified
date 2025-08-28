@@ -16,6 +16,9 @@ class Invoice extends Model
     protected $fillable = [
         'invoice_number',
         'invoice_date',
+        'room_id',
+        'new_reading',
+        'previous_reading',
         'tenant_id',
         'start_date',
         'end_date',
@@ -27,7 +30,15 @@ class Invoice extends Model
         'payment_status',
         'billing_type',
         'remarks',
+        'payment_methods',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'payment_methods' => 'array',
+        ];
+    }
 
     public function tenant(): BelongsTo
     {

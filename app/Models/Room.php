@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Room extends Model
@@ -18,7 +19,10 @@ class Room extends Model
     protected $fillable = [
         'house_id',
         'room_number',
+        'meter_number',
+        'latest_meter_reading',
         'rent_amount',
+        'tenant_id',
         'is_flat',
         'status',
     ];
@@ -28,13 +32,8 @@ class Room extends Model
         return $this->belongsTo(House::class);
     }
 
-    public function tenants(): BelongsToMany
+    public function tenant(): HasOne
     {
-        return $this->belongsToMany(
-            related: Tenant::class,
-            table: "tenant_rooms",
-            foreignPivotKey: "room_id",
-            relatedPivotKey: "tenant_id",
-        );
+        return $this->hasOne(Tenant::class, 'id', 'tenant_id');
     }
 }

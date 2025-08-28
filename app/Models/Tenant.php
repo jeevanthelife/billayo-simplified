@@ -21,6 +21,7 @@ class Tenant extends Model
         'phone',
         'start_date',
         'status',
+        'electricity_rate',
     ];
 
     public function tenantUsers(): BelongsToMany

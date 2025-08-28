@@ -8,6 +8,8 @@ use App\Filament\Resources\RoomResource\RelationManagers;
 use App\Models\Room;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -31,18 +33,40 @@ class RoomResource extends Resource
                 Forms\Components\TextInput::make('room_number')
                     ->required()
                     ->maxLength(255),
+                Forms\Components\TextInput::make('meter_number')
+                    ->required()
+                    ->maxLength(255),
+                Forms\Components\TextInput::make('latest_meter_reading')
+                    ->required()
+                    ->numeric()
+                    ->maxLength(255),
                 Forms\Components\TextInput::make('rent_amount')
                     ->required()
                     ->numeric()
                     ->inputMode('decimal')
                     ->rules(['max:99999999.99']),
+                Forms\Components\Select::make('tenant_id')
+                    ->label(__('Occupant'))
+                    ->relationship('tenant', 'name')
+                    ->preload()
+                    ->live()
+                    ->reactive()
+                    ->afterStateUpdated(
+                        function (Get $get, Set $set) {
+                            return $set('status', $get('tenant_id') ?
+                                RoomStatusEnum::Occupied->value :
+                                RoomStatusEnum::Available->value);
+                        }
+                    ),
                 Forms\Components\Toggle::make('is_flat')
                     ->inline(false)
                     ->required(),
                 Forms\Components\Select::make('status')
                     ->required()
+                    ->disabled()
+                    ->dehydrated()
                     ->options(RoomStatusEnum::class)
-                    ->default(RoomStatusEnum::Available->value),
+                    ->default(RoomStatusEnum::Available->value)
             ]);
     }
 
@@ -58,12 +82,20 @@ class RoomResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('room_number')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('meter_number')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('latest_meter_reading')
+                    ->badge(),
                 Tables\Columns\TextColumn::make('rent_amount')
                     ->numeric()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('tenant.name')
+                    ->label(__('Occupant'))
+                    ->searchable(),
                 Tables\Columns\IconColumn::make('is_flat')
                     ->boolean(),
                 Tables\Columns\TextColumn::make('status')
+                    ->badge()
                     ->searchable(),
                 Tables\Columns\TextColumn::make('deleted_at')
                     ->dateTime()

@@ -6,6 +6,7 @@ use Filament\Support\Contracts\HasLabel;
 
 enum InvoiceItemTypeEnum: string implements HasLabel
 {
+    case Rent = 'Rent';
     case Electricity = 'Electricity';
     case Water = 'Water';
     case Waste = 'Waste';
@@ -15,6 +16,7 @@ enum InvoiceItemTypeEnum: string implements HasLabel
     public function getLabel(): ?string
     {
         return match ($this) {
+            self::Rent => __('Rent'),
             self::Electricity => __('Electricity'),
             self::Water => __('Water'),
             self::Waste => __('Waste'),
