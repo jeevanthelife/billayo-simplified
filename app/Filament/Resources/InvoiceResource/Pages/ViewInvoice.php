@@ -29,4 +29,26 @@ class ViewInvoice extends ViewRecord
                 ),
         ];
     }
+
+    public function mount(int | string $record): void
+    {
+        $this->record = $this->resolveRecord($record);
+        $this->record->paymentOptions = $this->record->invoicePaymentOptions->map(function ($option) {
+            $media = $option->getFirstMedia();
+            return [
+                'url' => $media->getUrl(),
+                'full_url' => $media->getFullUrl(),
+                'path' => $media->getPath(),
+                'file_name' => $media->name,
+                'payment_name' => $option->name,
+                'payment_type' => $option->type,
+            ];
+        });
+
+        $this->authorizeAccess();
+
+        if (! $this->hasInfolist()) {
+            $this->fillForm();
+        }
+    }
 }

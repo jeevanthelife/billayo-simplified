@@ -4,11 +4,13 @@
         {{-- Header --}}
         <div class="text-center">
             <h2 class="text-xl font-semibold">Bill Details</h2>
-            <span class="text-gray-600">{{ $record->invoice_number }}</span>
+            <span class="text-gray-600"><strong>Invoice Number: </strong>{{ $record->invoice_number }}</span>
             <p class="text-gray-600">
-                {{ $record->billing_type }} - Room {{ $record->room->room_number }}
+                <strong>Billed To: </strong>{{ $record->billing_type }} - Room {{ $record->room->room_number }}
                 ({{ $record->tenant->name }})
             </p>
+            <span class="text-gray-600"><strong>Meter Readings:</strong> {{ $record->new_reading }} -
+                {{ $record->previous_reading }}</span>
         </div>
 
         {{-- Status --}}
@@ -34,6 +36,22 @@
                         <span>Rs. {{ number_format($item->amount, 2) }}</span>
                     </div>
                 @endforeach
+                @if ($record->due_amount > 0)
+                    <div class="flex justify-between text-sm">
+                        <strong>
+                            Previous Dues
+                        </strong>
+                        <strong>Rs. {{ number_format($record->due_amount, 2) }}</strong>
+                    </div>
+                @endif
+                @if ($record->advance_amount > 0)
+                    <div class="flex justify-between text-sm">
+                        <strong>
+                            Advance Amount
+                        </strong>
+                        <strong>Rs. {{ number_format($record->advance_amount, 2) }}</strong>
+                    </div>
+                @endif
             </div>
         </div>
 
@@ -52,5 +70,20 @@
         </div>
         {{-- Actions --}}
         @livewire('approve-invoice', ['invoice' => $this->record])
+
+        @if (!empty($record->paymentOptions))
+            <h2 class="text-center font-semibold">Payment Options</h2>
+            <div class="flex payment-options" style="justify-content: space-evenly;">
+                @foreach ($record->paymentOptions as $option)
+                    <div class="qr-container">
+                        <figure>
+                            <img style="max-width:120px; height:120px; width:120px;" src="{{ $option['full_url'] }}"
+                                alt="{{ $option['file_name'] }} QR Code">
+                            <figcaption>{{ $option['payment_name'] }}</figcaption>
+                        </figure>
+                    </div>
+                @endforeach
+            </div>
+        @endif
     </div>
 </x-filament-panels::page>
