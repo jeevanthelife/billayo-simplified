@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
@@ -24,7 +25,7 @@ class Invoice extends Model
         'end_date',
         'sub_total',
         'due_amount',
-        'advanced_amount',
+        'advance_amount',
         'grand_total',
         'status',
         'payment_status',
@@ -45,8 +46,18 @@ class Invoice extends Model
         return $this->belongsTo(Tenant::class);
     }
 
+    public function room(): BelongsTo
+    {
+        return $this->belongsTo(Room::class);
+    }
+
     public function invoiceItems(): HasMany
     {
         return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function invoicePaymentOptions(): BelongsToMany
+    {
+        return $this->belongsToMany(PaymentMethod::class);
     }
 }

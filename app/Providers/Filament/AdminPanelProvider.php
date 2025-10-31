@@ -26,7 +26,7 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->breadcrumbs(false)
+            ->breadcrumbs(true)
             ->sidebarCollapsibleOnDesktop()
             ->topNavigation()
             ->login()

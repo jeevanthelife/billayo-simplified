@@ -31,6 +31,7 @@ class PaymentMethod extends Model implements HasMedia
     {
         return [
             'details' => 'array',
+            'qr_code' => 'array',
         ];
     }
 

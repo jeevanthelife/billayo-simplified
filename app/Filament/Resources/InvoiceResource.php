@@ -17,6 +17,7 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
+use Filament\Infolists\Components\Grid as ComponentsGrid;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\ActionGroup;
@@ -25,6 +26,10 @@ use Icetalker\FilamentTableRepeater\Forms\Components\TableRepeater;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Infolists\Infolist;
+use Filament\Infolists\Components\TextEntry;
+use Filament\Infolists\Components\RepeatableEntry;
+use Filament\Infolists\Components\Section as ComponentsSection;
 
 class InvoiceResource extends Resource
 {
@@ -131,7 +136,7 @@ class InvoiceResource extends Resource
                                     ->reactive()
                                     ->dehydrated()
                                     ->afterStateUpdated(function (Set $set, Get $get) {
-                                        $set('grand_total', self::calculateGrandTotal($get('sub_total'), $get('advanced_amount'), $get('due_amount')));
+                                        $set('grand_total', self::calculateGrandTotal($get('sub_total'), $get('advance_amount'), $get('due_amount')));
                                     }),
                                 Forms\Components\TextInput::make('due_amount')
                                     ->required()
@@ -142,9 +147,9 @@ class InvoiceResource extends Resource
                                     ->live()
                                     ->reactive()
                                     ->afterStateUpdated(function (Set $set, Get $get) {
-                                        $set('grand_total', self::calculateGrandTotal($get('sub_total'), $get('advanced_amount'), $get('due_amount')));
+                                        $set('grand_total', self::calculateGrandTotal($get('sub_total'), $get('advance_amount'), $get('due_amount')));
                                     }),
-                                Forms\Components\TextInput::make('advanced_amount')
+                                Forms\Components\TextInput::make('advance_amount')
                                     ->required()
                                     ->prefix('Rs.')
                                     ->numeric()
@@ -153,7 +158,7 @@ class InvoiceResource extends Resource
                                     ->live()
                                     ->reactive()
                                     ->afterStateUpdated(function (Set $set, Get $get) {
-                                        $set('grand_total', self::calculateGrandTotal($get('sub_total'), $get('advanced_amount'), $get('due_amount')));
+                                        $set('grand_total', self::calculateGrandTotal($get('sub_total'), $get('advance_amount'), $get('due_amount')));
                                     }),
                                 Forms\Components\TextInput::make('grand_total')
                                     ->required()
@@ -185,7 +190,7 @@ class InvoiceResource extends Resource
                         $set('sub_total', $sum);
                         $set('grand_total', self::calculateGrandTotal(
                             $get('sub_total'),
-                            $get('advanced_amount'),
+                            $get('advance_amount'),
                             $get('due_amount')
                         ));
                     })
@@ -283,10 +288,12 @@ class InvoiceResource extends Resource
                     ->sortable(),
                 Tables\Columns\TextColumn::make('start_date')
                     ->date()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('end_date')
                     ->date()
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('sub_total')
                     ->numeric()
                     ->sortable()
@@ -334,16 +341,21 @@ class InvoiceResource extends Resource
                             ->label('Payment Details')
                             ->multiple()
                             ->options(PaymentMethod::get()->pluck('name', 'id'))
-                            ->required(),
+                            ->required()
+                            ->maxItems(3),
                     ])
                     ->requiresConfirmation()
-                    ->action(fn(Invoice $record) => $record->update(['status' => InvoiceStatusEnum::Approved->value])),
+                    ->action(function (Invoice $record, array $data) {
+                        $record->invoicePaymentOptions()->sync($data["payment_methods"]);
+                        $record->update(['status' => InvoiceStatusEnum::Approved->value]);
+                    }),
                 ActionGroup::make([
                     Tables\Actions\Action::make('Print')
                         ->label(__("Print"))
                         ->color('info')
                         ->icon('heroicon-o-printer')
-                        ->visible(fn(Invoice $record) => $record->status == InvoiceStatusEnum::Approved->value),
+                        ->url(fn(Invoice $record): string => route('invoices.preview', $record))
+                        ->openUrlInNewTab(),
                     Tables\Actions\Action::make('Cancel')
                         ->label(__("Cancel"))
                         ->color('danger')
@@ -375,6 +387,113 @@ class InvoiceResource extends Resource
             );
     }
 
+    public static function infolist(Infolist $infolist): Infolist
+    {
+        return $infolist
+            ->schema([
+                ComponentsGrid::make()
+                    ->schema([
+                        TextEntry::make('room.room_number')
+                            ->label(__('Room')),
+
+                        TextEntry::make('tenant.name')
+                            ->label(__('Tenant')),
+                    ])
+                    ->columns(2),
+
+                ComponentsSection::make(__('Electricity Reading'))
+                    ->schema([
+                        TextEntry::make('previous_reading')
+                            ->label(__('Previous Reading')),
+                        TextEntry::make('new_reading')
+                            ->label(__('New Reading')),
+                    ])
+                    ->columns(2),
+
+                ComponentsSection::make(__('Invoice Details'))
+                    ->schema([
+                        TextEntry::make('invoice_number')
+                            ->label(__('Invoice Number')),
+
+                        TextEntry::make('invoice_date')
+                            ->label(__('Invoice Date'))
+                            ->date(),
+
+                        TextEntry::make('billing_type')
+                            ->label(__('Billing Type')),
+
+                        TextEntry::make('start_date')
+                            ->label(__('Start Date'))
+                            ->date(),
+
+                        TextEntry::make('end_date')
+                            ->label(__('End Date'))
+                            ->date(),
+
+                        TextEntry::make('status')
+                            ->label(__('Invoice Status')),
+
+                        TextEntry::make('payment_status')
+                            ->label(__('Payment Status')),
+
+                        TextEntry::make('remarks')
+                            ->label(__('Remarks'))
+                            ->columnSpanFull()
+                            ->visible(function ($record) {
+                                return collect($record->invoiceItems)
+                                    ->contains('title', \App\Enums\InvoiceItemTypeEnum::Others->value);
+                            }),
+                    ])
+                    ->columns(3),
+
+                ComponentsSection::make(__('Invoice Payment Details'))
+                    ->schema([
+                        TextEntry::make('sub_total')
+                            ->label(__('Subtotal'))
+                            ->prefix('Rs.'),
+
+                        TextEntry::make('due_amount')
+                            ->label(__('Due Amount'))
+                            ->prefix('Rs.'),
+
+                        TextEntry::make('advance_amount')
+                            ->label(__('Advanced Amount'))
+                            ->prefix('Rs.'),
+
+                        TextEntry::make('grand_total')
+                            ->label(__('Grand Total'))
+                            ->prefix('Rs.'),
+                    ])
+                    ->columns(2),
+
+                ComponentsSection::make(__('Invoice Items'))
+                    ->schema([
+                        RepeatableEntry::make('invoiceItems')
+                            ->schema([
+                                TextEntry::make('title')
+                                    ->label(__('Title')),
+
+                                TextEntry::make('description')
+                                    ->label(__('Other Details')),
+
+                                TextEntry::make('quantity')
+                                    ->label(__('Quantity')),
+
+                                TextEntry::make('rate')
+                                    ->label(__('Rate'))
+                                    ->prefix('Rs.'),
+
+                                TextEntry::make('amount')
+                                    ->label(__('Amount'))
+                                    ->prefix('Rs.'),
+                            ])
+                            ->columns(5)
+                            ->label(false)
+                            ->visible(fn($record) => $record->room_id !== null),
+                    ])
+            ]);
+    }
+
     public static function getRelations(): array
     {
         return [
@@ -388,6 +507,7 @@ class InvoiceResource extends Resource
             'index' => Pages\ListInvoices::route('/'),
             'create' => Pages\CreateInvoice::route('/create'),
             'edit' => Pages\EditInvoice::route('/{record}/edit'),
+            'view' => Pages\ViewInvoice::route('/{record}/view'),
         ];
     }
 
@@ -410,7 +530,7 @@ class InvoiceResource extends Resource
         // 🔁 Recalculate grand_total too
         $set('../../grand_total', self::calculateGrandTotal(
             $get('../../sub_total'),
-            $get('../../advanced_amount'),
+            $get('../../advance_amount'),
             $get('../../due_amount')
         ));
     }
