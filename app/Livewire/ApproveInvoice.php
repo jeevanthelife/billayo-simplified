@@ -110,11 +110,13 @@ class ApproveInvoice extends Component implements HasForms
             'grand_total' => $this->invoice->grand_total,
             'items' => $invoiceItems,
             'payment_options' => $paymentOptions,
+            'new_reading' => $this->invoice->new_reading,
+            'previous_reading' => $this->invoice->previous_reading,
         ];
 
         $pdf = Pdf::loadView('invoices.pdf', compact('invoicePdf'))->setOption([
-                "isRemoteEnabled" => true,
-            ]);
+            "isRemoteEnabled" => true,
+        ]);
 
         return response()->streamDownload(
             fn() => print($pdf->output()),

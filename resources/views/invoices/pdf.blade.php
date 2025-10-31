@@ -145,7 +145,8 @@
                     </td>
                     <td class="info-right">
                         <strong>Status:</strong> {{ $invoicePdf->status }}<br>
-                        <strong>Period:</strong> {{ $invoicePdf->start_date }} - {{ $invoicePdf->end_date }}
+                        <strong>Period:</strong> {{ $invoicePdf->start_date }} - {{ $invoicePdf->end_date }}<br>
+                        <strong>Readings:</strong> {{ $invoicePdf->new_reading }} - {{ $invoicePdf->previous_reading }}
                     </td>
                 </tr>
             </table>
