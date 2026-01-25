@@ -209,10 +209,15 @@
                 @endforeach
             </div>
         @endif
-
-        <div class="footer">
-            Thank you for your payment.
-        </div>
+        @if ($invoicePdf->remarks)
+            <div class="footer">
+                <strong>Remarks:</strong> {{ $invoicePdf->remarks }}
+            </div>
+        @else
+            <div class="footer">
+                Kindly ensure timely payment of rent and outstanding dues. Thank you!
+            </div>
+        @endif
     </div>
 </body>
 

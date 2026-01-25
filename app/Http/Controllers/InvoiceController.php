@@ -47,6 +47,7 @@ class InvoiceController
             'payment_options' => $paymentOptions,
             'new_reading' => $invoice->new_reading,
             'previous_reading' => $invoice->previous_reading,
+            'remarks' => $invoice->remarks,
         ];
 
         $pdf = Pdf::loadView('invoices.pdf', compact('invoicePdf'))->setOption([

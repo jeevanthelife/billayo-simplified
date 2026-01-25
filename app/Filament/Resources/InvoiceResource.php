@@ -335,7 +335,8 @@ class InvoiceResource extends Resource
                     ->label(__("Approve"))
                     ->color('success')
                     ->icon('approval-icon')
-                    ->hidden(fn(Invoice $record) => $record->status == InvoiceStatusEnum::Approved->value)
+                    ->hidden(fn(Invoice $record) => in_array($record->status, [
+                        InvoiceStatusEnum::Approved->value, InvoiceStatusEnum::Sent->value]) || $record->payment_status == PaymentStatusEnum::Paid->value)
                     ->form([
                         Forms\Components\Select::make('payment_methods')
                             ->label('Payment Details')
@@ -348,6 +349,15 @@ class InvoiceResource extends Resource
                     ->action(function (Invoice $record, array $data) {
                         $record->invoicePaymentOptions()->sync($data["payment_methods"]);
                         $record->update(['status' => InvoiceStatusEnum::Approved->value]);
+                    }),
+                    Tables\Actions\Action::make('Paid')
+                    ->label(__("Mark as Paid"))
+                    ->color('success')
+                    ->icon('heroicon-o-check')
+                    ->visible(fn(Invoice $record) => $record->status == InvoiceStatusEnum::Approved->value || $record->payment_status != PaymentStatusEnum::Paid->value)
+                    ->requiresConfirmation()
+                    ->action(function (Invoice $record, array $data) {
+                        $record->update(['payment_status' => PaymentStatusEnum::Paid->value]);
                     }),
                 ActionGroup::make([
                     Tables\Actions\Action::make('Print')
@@ -362,6 +372,13 @@ class InvoiceResource extends Resource
                         ->icon('heroicon-o-archive-box-x-mark')
                         ->visible(fn(Invoice $record) => $record->status == InvoiceStatusEnum::Approved->value)
                         ->action(fn(Invoice $record) => $record->update(['status' => InvoiceStatusEnum::Canceled->value])),
+                    Tables\Actions\Action::make('Sent')
+                        ->label(__("Mark as Sent"))
+                        ->color('primary')
+                        ->icon('heroicon-o-paper-airplane')
+                        ->visible(fn(Invoice $record) => $record->status == InvoiceStatusEnum::Approved->value)
+                        ->requiresConfirmation()
+                        ->action(fn(Invoice $record) => $record->update(['status' => InvoiceStatusEnum::Sent->value])),
                     // Tables\Actions\Action::make('Open')
                     //     ->label(__("Open"))
                     //     ->color('warning')
@@ -384,7 +401,7 @@ class InvoiceResource extends Resource
                     $record->status,
                     [InvoiceStatusEnum::Open->value, InvoiceStatusEnum::Canceled->value]
                 )
-            );
+            )->defaultSort('created_at', 'desc');
     }
 
     public static function infolist(Infolist $infolist): Infolist
@@ -521,7 +538,7 @@ class InvoiceResource extends Resource
 
     protected static function updateTotals(Set $set, Get $get): void
     {
-        $set('amount', ((int)$get('quantity') ?? 0) * ((int)$get('rate') ?? 0));
+        $set('amount', ((float)$get('quantity') ?? 0) * ((float)$get('rate') ?? 0));
 
         $items = $get('../../invoiceItems') ?? [];
         $sum = collect($items)->sum(fn($item) => (float)($item['amount'] ?? 0));
