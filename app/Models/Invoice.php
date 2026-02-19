@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Str;
 
 class Invoice extends Model
 {
@@ -30,6 +32,7 @@ class Invoice extends Model
         'status',
         'payment_status',
         'billing_type',
+        'month',
         'remarks',
         'payment_methods',
     ];
@@ -39,6 +42,39 @@ class Invoice extends Model
         return [
             'payment_methods' => 'array',
         ];
+    }
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($invoice) {
+            if (! $invoice->invoice_number) {
+                $invoice->invoice_number = static::generateInvoiceNumber();
+            }
+        });
+    }
+
+    protected static function generateInvoiceNumber(): string
+    {
+        $now = Carbon::now();
+        $prefix = 'INV-' . $now->format('Ym'); // YYYYMM
+
+        // Find last invoice for this year-month
+        $last = static::where('invoice_number', 'like', $prefix . '%')
+            ->orderBy('invoice_number', 'desc')
+            ->first();
+
+        if ($last) {
+            $lastSeq = (int) Str::afterLast($last->invoice_number, '-');
+            $nextSeq = $lastSeq + 1;
+        } else {
+            $nextSeq = 1;
+        }
+
+        $seq = str_pad($nextSeq, 4, '0', STR_PAD_LEFT); // XXXX
+
+        return $prefix . '-' . $seq; // INV-YYYYMM-XXXX
     }
 
     public function tenant(): BelongsTo

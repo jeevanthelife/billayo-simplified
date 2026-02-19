@@ -31,6 +31,7 @@ return new class extends Migration
             $table->string('status')->default(InvoiceStatusEnum::Open->value);
             $table->string('payment_status')->default(PaymentStatusEnum::Pending->value);
             $table->string('billing_type')->default(BillingTypeEnum::Monthly->value)->nullable();
+            $table->string('month')->nullable();
             $table->text('remarks')->nullable();
             $table->timestamps();
         });

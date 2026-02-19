@@ -140,13 +140,19 @@
                 <tr>
                     <td class="info-left">
                         <strong>Billed To:</strong><br>
-                        Room: {{ $invoicePdf->room_number }}<br>
-                        {{ $invoicePdf->tenant_name }}
+                        @if ($invoicePdf->month)
+                            Room: {{ $invoicePdf->room_number }} | {{ $invoicePdf->tenant_name }}<br>
+                            Invoice Month: {{ $invoicePdf->month }}
+                        @else
+                            Room: {{ $invoicePdf->room_number }}<br>
+                            {{ $invoicePdf->tenant_name }}
+                        @endif
                     </td>
                     <td class="info-right">
                         <strong>Status:</strong> {{ $invoicePdf->status }}<br>
-                        <strong>Period:</strong> {{ $invoicePdf->start_date }} - {{ $invoicePdf->end_date }}<br>
-                        <strong>Readings:</strong> {{ $invoicePdf->new_reading }} - {{ $invoicePdf->previous_reading }}
+                        <strong>Pay Period:</strong> {{ $invoicePdf->start_date }} - {{ $invoicePdf->end_date }}<br>
+                        <strong>Readings:</strong> {{ $invoicePdf->new_reading }} -
+                        {{ $invoicePdf->previous_reading }}
                     </td>
                 </tr>
             </table>

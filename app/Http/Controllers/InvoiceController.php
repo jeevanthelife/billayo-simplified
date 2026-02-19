@@ -37,6 +37,7 @@ class InvoiceController
             'room_number' => $invoice->room->room_number,
             'tenant_name' => $invoice->tenant->name,
             'status' => $invoice->status,
+            'month' => $invoice->month,
             'start_date' => $invoice->start_date,
             'end_date' => $invoice->end_date,
             'sub_total' => $invoice->sub_total,
@@ -56,7 +57,7 @@ class InvoiceController
 
         return response()->streamDownload(
             fn() => print($pdf->output()),
-            'invoice-' . str_replace(' ', '-', $invoicePdf->tenant_name) . '-' . $invoicePdf->invoice_number . '.pdf'
+            str_replace(' ', '_', $invoicePdf->tenant_name) . '_' . $invoicePdf->month . "_Bills_" . $invoicePdf->invoice_number  .  '.pdf'
         );
     }
 }

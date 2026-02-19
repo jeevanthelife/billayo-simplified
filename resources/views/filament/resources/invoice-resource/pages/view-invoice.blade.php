@@ -9,6 +9,11 @@
                 <strong>Billed To: </strong>{{ $record->billing_type }} - Room {{ $record->room->room_number }}
                 ({{ $record->tenant->name }})
             </p>
+            @if($record->month)
+                <p class="text-gray-600">
+                    <strong>Billed Month: </strong>{{ $record->month }}
+                </p>
+            @endif
             <span class="text-gray-600"><strong>Meter Readings:</strong> {{ $record->new_reading }} -
                 {{ $record->previous_reading }}</span>
         </div>

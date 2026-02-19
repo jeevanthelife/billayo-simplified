@@ -82,6 +82,8 @@ class InvoiceResource extends Resource
                             ->schema([
                                 Forms\Components\TextInput::make('invoice_number')
                                     ->required()
+                                    ->default(fn() => Invoice::generateInvoiceNumber())
+                                    ->dehydrated()
                                     ->maxLength(255),
                                 Forms\Components\DatePicker::make('invoice_date')
                                     ->required()
@@ -93,6 +95,15 @@ class InvoiceResource extends Resource
                                     ->live()
                                     ->reactive()
                                     ->default(BillingTypeEnum::Monthly->value),
+                                Forms\Components\Select::make('month')
+                                    ->label('Month')
+                                    ->requiredIf('billing_type', BillingTypeEnum::Monthly->value)
+                                    ->hidden(function (callable $get) {
+                                        return $get('billing_type') == BillingTypeEnum::Monthly->value ? false : true;
+                                    })
+                                    ->live()
+                                    ->reactive()
+                                    ->options(config('nepal-months')),
                                 Forms\Components\DatePicker::make('start_date')
                                     ->required()
                                     ->suffix("A.D")
@@ -311,6 +322,9 @@ class InvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('billing_type')
                     ->searchable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('month')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 Tables\Columns\TextColumn::make('deleted_at')
                     ->dateTime()
                     ->sortable()
@@ -336,7 +350,9 @@ class InvoiceResource extends Resource
                     ->color('success')
                     ->icon('approval-icon')
                     ->hidden(fn(Invoice $record) => in_array($record->status, [
-                        InvoiceStatusEnum::Approved->value, InvoiceStatusEnum::Sent->value]) || $record->payment_status == PaymentStatusEnum::Paid->value)
+                        InvoiceStatusEnum::Approved->value,
+                        InvoiceStatusEnum::Sent->value
+                    ]) || $record->payment_status == PaymentStatusEnum::Paid->value)
                     ->form([
                         Forms\Components\Select::make('payment_methods')
                             ->label('Payment Details')
@@ -350,11 +366,11 @@ class InvoiceResource extends Resource
                         $record->invoicePaymentOptions()->sync($data["payment_methods"]);
                         $record->update(['status' => InvoiceStatusEnum::Approved->value]);
                     }),
-                    Tables\Actions\Action::make('Paid')
+                Tables\Actions\Action::make('Paid')
                     ->label(__("Mark as Paid"))
                     ->color('success')
                     ->icon('heroicon-o-check')
-                    ->visible(fn(Invoice $record) => $record->status == InvoiceStatusEnum::Approved->value || $record->payment_status != PaymentStatusEnum::Paid->value)
+                    ->visible(fn(Invoice $record) => in_array($record->status, [InvoiceStatusEnum::Approved->value, InvoiceStatusEnum::Sent->value]) && $record->payment_status != PaymentStatusEnum::Paid->value)
                     ->requiresConfirmation()
                     ->action(function (Invoice $record, array $data) {
                         $record->update(['payment_status' => PaymentStatusEnum::Paid->value]);
@@ -438,6 +454,9 @@ class InvoiceResource extends Resource
 
                         TextEntry::make('billing_type')
                             ->label(__('Billing Type')),
+
+                        TextEntry::make('month')
+                            ->label(__('Bill Month')),
 
                         TextEntry::make('start_date')
                             ->label(__('Start Date'))
