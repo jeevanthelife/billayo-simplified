@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Invoice;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class InvoiceController
 {
@@ -33,7 +34,7 @@ class InvoiceController
 
         $invoicePdf = (object) [
             'invoice_number' => $invoice->invoice_number,
-            'date' => date('d F Y'),
+            'date' => Carbon::parse($invoice->invoice_date)->format('d F Y'),
             'room_number' => $invoice->room->room_number,
             'tenant_name' => $invoice->tenant->name,
             'status' => $invoice->status,

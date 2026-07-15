@@ -189,7 +189,7 @@
                         <tr class="advance-row">
                             <td colspan=3 style="text-align: left;"><strong>Advance Amount</strong></td>
                             <td style="text-align: right;">
-                                <strong>{{ number_format($invoicePdf->advance_amount, 2) }}</strong>
+                                <strong>- {{ number_format($invoicePdf->advance_amount, 2) }}</strong>
                             </td>
                         </tr>
                     @endif
