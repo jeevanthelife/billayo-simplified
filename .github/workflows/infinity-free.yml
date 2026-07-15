@@ -2,12 +2,12 @@
 
 name: Deploy to billayo.xo.je/
 
-# Run manually or on push to the main branch
+# Run manually or on push to the infinityfree-hosting branch
 on:
   workflow_dispatch:
   push:
     branches:
-      - main
+      - infinityfree-hosting
 
 jobs:
   deploy:
